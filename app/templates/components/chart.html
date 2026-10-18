@@ -1,0 +1,52 @@
+{# 
+  Plotly Chart Wrapper Macro
+  Usage: {% from "components/chart.html" import plotly_chart %}
+         {{ plotly_chart(chart_json=chart.chart_json, chart_id=chart.chart_id, 
+                        title=chart.title, height=chart.height) }}
+#}
+{% macro plotly_chart(chart_json, chart_id, title="", height=400, description="", css_class="") %}
+<div class="chart-card {{ css_class }}">
+    {% if title %}
+    <div class="chart-title">{{ title }}</div>
+    {% endif %}
+    {% if description %}
+    <div class="chart-description">{{ description }}</div>
+    {% endif %}
+    <div class="chart-container" id="{{ chart_id }}" style="height: {{ height }}px;"></div>
+</div>
+
+<script>
+(function() {
+    var data = {{ chart_json|safe }};
+    var layout = data.layout || {};
+
+    // Apply consistent theme defaults
+    layout.font = Object.assign({family: 'Inter, IBM Plex Sans Arabic, sans-serif', size: 13, color: '#6B7280'}, layout.font || {});
+    layout.paper_bgcolor = 'transparent';
+    layout.plot_bgcolor = 'transparent';
+    layout.margin = Object.assign({l: 50, r: 30, t: 40, b: 50}, layout.margin || {});
+    layout.autosize = true;
+    layout.height = {{ height }};
+
+    // Gridline styling
+    if (layout.xaxis) {
+        layout.xaxis.gridcolor = layout.xaxis.gridcolor || '#e2e8f0';
+        layout.xaxis.zerolinecolor = layout.xaxis.zerolinecolor || '#e2e8f0';
+    }
+    if (layout.yaxis) {
+        layout.yaxis.gridcolor = layout.yaxis.gridcolor || '#e2e8f0';
+        layout.yaxis.zerolinecolor = layout.yaxis.zerolinecolor || '#e2e8f0';
+    }
+
+    var config = {
+        responsive: true,
+        displayModeBar: 'hover',
+        modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+        displaylogo: false,
+        locale: 'en'
+    };
+
+    Plotly.newPlot('{{ chart_id }}', data.data || [], layout, config);
+})();
+</script>
+{% endmacro %}

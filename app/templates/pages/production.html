@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block subtitle %}
+<div class="page-subtitle">
+    Actual vs planned production, manufacturing line efficiency, bottleneck Pareto analysis, and overtime hours
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- KPI Cards Row -->
+{% from "components/kpi_card.html" import kpi_card %}
+<div class="kpi-grid">
+    {% for kpi in kpis %}
+    {{ kpi_card(
+        title=kpi.title,
+        value=kpi.value,
+        delta=kpi.delta,
+        delta_label=kpi.delta_label,
+        neutral_delta=kpi.neutral_delta,
+        favorable=kpi.favorable,
+        icon=kpi.icon,
+        color=kpi.color,
+    ) }}
+    {% endfor %}
+</div>
+
+<!-- Charts Section -->
+{% from "components/chart.html" import plotly_chart %}
+<div class="chart-grid">
+    {% for chart in charts %}
+    {{ plotly_chart(
+        chart_json=chart.chart_json,
+        chart_id=chart.chart_id,
+        title=chart.title,
+        height=chart.height,
+        description=chart.description,
+    ) }}
+    {% endfor %}
+</div>
+{% endblock %}

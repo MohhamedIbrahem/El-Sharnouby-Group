@@ -1,0 +1,81 @@
+<aside class="sidebar" id="sidebar">
+    <!-- Header / Brand -->
+    <div class="sidebar-header">
+        <div class="sidebar-logo">S</div>
+        <div class="sidebar-brand">
+            <span class="brand-name">El-Sharnouby Group</span>
+            <span class="brand-sub">Business Intelligence Platform</span>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+        <div class="nav-section-label">Dashboards</div>
+
+        <a href="/" class="nav-item {{ 'active' if page_id == 'executive' }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg></span>
+            <span class="nav-label">Executive Command Center</span>
+        </a>
+
+        <a href="/sales" class="nav-item {{ 'active' if page_id == 'sales' }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>
+            <span class="nav-label">Sales &amp; Profitability</span>
+        </a>
+
+        <a href="/customers" class="nav-item {{ 'active' if page_id == 'customers' }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+            <span class="nav-label">Customer 360&deg;</span>
+        </a>
+
+        <a href="/channels" class="nav-item {{ 'active' if page_id == 'channels' }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 7h20"/><path d="m3 7 1.5 12a1 1 0 0 0 1 .9h13a1 1 0 0 0 1-.9L21 7"/><path d="M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/><path d="M10 12v4"/><path d="M14 12v4"/></svg></span>
+            <span class="nav-label">Branch &amp; Channel Performance</span>
+        </a>
+
+        <a href="/inventory" class="nav-item {{ 'active' if page_id == 'inventory' }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg></span>
+            <span class="nav-label">Inventory &amp; Demand Planning</span>
+        </a>
+
+        <div class="nav-section-label">Operations</div>
+
+        <a href="/marketing" class="nav-item {{ 'active' if page_id == 'marketing' }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span>
+            <span class="nav-label">Marketing Effectiveness</span>
+        </a>
+
+        <a href="/production" class="nav-item {{ 'active' if page_id == 'production' }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M17 18h1"/><path d="M12 18h1"/><path d="M7 18h1"/></svg></span>
+            <span class="nav-label">Production &amp; Bottlenecks</span>
+        </a>
+
+        <a href="/quality" class="nav-item {{ 'active' if page_id == 'quality' }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1Z"/><path d="m9 12 2 2 4-4"/></svg></span>
+            <span class="nav-label">Quality &amp; Returns</span>
+        </a>
+
+        <a href="/printing" class="nav-item {{ 'active' if page_id == 'printing' }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></span>
+            <span class="nav-label">Printing Performance</span>
+        </a>
+
+        <div class="nav-section-label">Advanced</div>
+
+        <a href="/supply-chain" class="nav-item {{ 'active' if page_id == 'supply_chain' }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg></span>
+            <span class="nav-label">Supply Chain</span>
+        </a>
+
+        <a href="/value-chain" class="nav-item {{ 'active' if page_id == 'value_chain' }}">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
+            <span class="nav-label">Value Chain Profit Analyzer</span>
+        </a>
+    </nav>
+
+    <!-- Toggle -->
+    <div class="sidebar-toggle" id="sidebarToggle" role="button" aria-label="Collapse menu">
+        <span class="toggle-icon" id="toggleIcon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </span>
+    </div>
+</aside>

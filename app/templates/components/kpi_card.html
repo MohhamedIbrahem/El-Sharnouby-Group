@@ -1,0 +1,39 @@
+{#
+  KPI Card Macro — enterprise metric card.
+  Usage: {{ kpi_card(title="Net Sales", value="421.3M EGP", delta=3.3, delta_label="vs prior 12 months", favorable=True) }}
+
+  favorable: bool | None — the business meaning of the change.
+             True = change is favorable, False = unfavorable.
+             None (default) = fall back to the numeric direction of `delta`.
+#}
+{% macro kpi_card(title, value, delta=None, delta_label=None, icon=none, color=none, favorable=none, neutral_delta=False) %}
+{% if neutral_delta %}
+{% set delta_class = 'neutral' %}
+{% else %}
+{% set is_positive = (favorable is not none and favorable) or (favorable is none and delta is not none and delta >= 0) %}
+{% set delta_class = 'positive' if is_positive else 'negative' %}
+{% endif %}
+<div class="kpi-card animate-in">
+    <div class="kpi-header">
+        <span class="kpi-title">{{ title }}</span>
+    </div>
+    <div class="kpi-value">{{ value }}</div>
+    {% if delta is not none %}
+    <div class="kpi-delta {{ delta_class }}">
+        {% if delta >= 0 %}
+        <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 1l4 6H1z"/></svg>
+        {% else %}
+        <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 9L1 3h8z"/></svg>
+        {% endif %}
+        <span>{{ '{:+.1f}'.format(delta) }}%</span>
+        {% if delta_label %}
+        <span class="kpi-delta-label">{{ delta_label }}</span>
+        {% endif %}
+    </div>
+    {% elif delta_label %}
+    <div class="kpi-delta">
+        <span class="kpi-delta-label">{{ delta_label }}</span>
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}

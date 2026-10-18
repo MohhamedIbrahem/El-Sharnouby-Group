@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Product Journey Selector Header -->
+<div class="card table-card" style="padding: 1.15rem 1.5rem; margin-bottom: 1.5rem;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h3 class="table-title" style="margin: 0; font-size: 1.05rem;">Value Chain Profit Analyzer — Tracing the Cost Path of a Single Product</h3>
+            <p style="margin: 0.35rem 0 0 0; font-size: 0.82rem; color: var(--text-secondary);">
+                Select any product from the group catalog to trace its cost flow from raw materials and manufacturing through printing and quality, down to customer returns
+            </p>
+        </div>
+        <form method="get" action="/value-chain" class="value-controls-form">
+            <label for="product_id">Selected product:</label>
+            <select id="product_id" name="product_id" onchange="this.form.submit()">
+                {% for prod in products %}
+                <option value="{{ prod.id }}" {% if prod.id == selected_product_id %}selected{% endif %}>
+                    {{ prod.name }}
+                </option>
+                {% endfor %}
+            </select>
+            <noscript><button type="submit" class="btn btn-primary">Apply</button></noscript>
+        </form>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+{% from "components/kpi_card.html" import kpi_card %}
+<div class="kpi-grid">
+    {% for kpi in kpis %}
+    {{ kpi_card(
+        title=kpi.title,
+        value=kpi.value,
+        delta=kpi.delta,
+        delta_label=kpi.delta_label,
+        neutral_delta=kpi.neutral_delta,
+        favorable=kpi.favorable,
+        icon=kpi.icon,
+        color=kpi.color,
+    ) }}
+    {% endfor %}
+</div>
+
+<!-- Charts Grid -->
+{% from "components/chart.html" import plotly_chart %}
+<div class="chart-grid">
+    {% for chart in charts %}
+    {{ plotly_chart(
+        chart_json=chart.chart_json,
+        chart_id=chart.chart_id,
+        title=chart.title,
+        height=chart.height,
+        description=chart.description,
+    ) }}
+    {% endfor %}
+</div>
+
+{% if not kpis and not charts %}
+<div class="empty-state">
+    <div class="empty-text">Value Chain Profit Analyzer page under construction</div>
+</div>
+{% endif %}
+{% endblock %}

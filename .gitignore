@@ -1,0 +1,51 @@
+# ==========================================
+# El-Sharnouby Group - BI Platform
+# ==========================================
+
+# --- Data (NOT uploaded to GitHub) ---
+Sharnouby_Enterprise/
+*.csv
+*.xlsx
+*.xls
+
+# --- Virtual environment (NOT uploaded) ---
+venv/
+.venv/
+env/
+
+# --- Python artifacts ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# --- Secrets / environment ---
+.env
+.env.*
+!.env.example
+
+# --- Logs ---
+logs/
+*.log
+
+# --- Testing / tooling caches ---
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# --- Databases ---
+*.db
+*.sqlite
+*.sqlite3
