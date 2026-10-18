@@ -2,7 +2,10 @@
 REST API Router — JSON endpoints for programmatic access and future chatbot/RAG agents.
 (Task 16 - REST API Endpoints)
 """
-from fastapi import APIRouter, HTTPException, Path
+import json
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, HTTPException, Path, Response
 
 from app.core.data_loader import DATA
 from app.core.models import KPICard, ChartData
@@ -63,6 +66,8 @@ from app.services.value_chain import (
     get_true_profitability_leaderboard, get_hidden_cost_breakdown,
     get_cross_dept_anomalies, get_profitability_gap, get_product_list
 )
+# BI Report (page/export glue only — analytics stay in the services/report.py)
+from app.services.report import get_report_context, build_markdown
 
 logger = setup_logger(__name__)
 router = APIRouter(tags=["api"])
@@ -224,7 +229,40 @@ async def api_supply_chain_chart(chart_name: str = Path(..., description="Chart 
     return chart_map[chart_name](DATA)
 
 
-# ── Value Chain ───────────────────────────────────────────────
+# ── BI Report ──────────────────────────────────────────────────
+@router.get("/report/findings")
+@log_function
+async def api_report_findings():
+    """Structured JSON view of the BI report (findings, risks, recommendations)."""
+    return get_report_context(DATA).to_dict()
+
+
+@router.get("/report/export.md")
+@log_function
+async def api_report_export_md():
+    """Downloads the full BI report as a Markdown file (deterministic content)."""
+    ctx = get_report_context(DATA)
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    filename = f"el_sharnouby_bi_report_{stamp}.md"
+    return Response(
+        content=build_markdown(ctx),
+        media_type="text/markdown; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/report/export.json")
+@log_function
+async def api_report_export_json():
+    """Downloads the full BI report as structured JSON."""
+    ctx = get_report_context(DATA)
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    filename = f"el_sharnouby_bi_report_{stamp}.json"
+    return Response(
+        content=json.dumps(ctx.to_dict(), ensure_ascii=False, indent=2),
+        media_type="application/json; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 @router.get("/value-chain/kpis", response_model=list[KPICard])
 @log_function
 async def api_value_chain_kpis():

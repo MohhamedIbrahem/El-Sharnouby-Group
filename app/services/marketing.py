@@ -13,7 +13,7 @@ from app.core.charts import (
     PRIMARY_ORANGE, SECONDARY_TEAL, DARK_NAVY, LIGHT_ORANGE, LIGHT_TEAL, ACCENT_RED, ACCENT_GREEN, ACCENT_BLUE, PALETTE
 )
 from app.core.metrics import (
-    pct_change_sum, pct_change_ratio_windowed, pp_change_ratio, pp_change_mean,
+    pct_change_sum, pct_change_ratio_windowed, pp_change_mean,
 )
 from app.core.logger import setup_logger, log_function
 
@@ -51,7 +51,7 @@ def get_marketing_kpis(data: dict[str, pd.DataFrame]) -> list[KPICard]:
     spend_delta = pct_change_sum(mkt, "Spend_EGP", "Start_Date") if not mkt.empty else None
     revenue_delta = pct_change_sum(mkt, "Attributed_Revenue_EGP", "Start_Date") if not mkt.empty else None
     roas_delta = (
-        pp_change_ratio(mkt, "Attributed_Revenue_EGP", "Spend_EGP", "Start_Date")
+        pct_change_ratio_windowed(mkt, "Attributed_Revenue_EGP", "Spend_EGP", "Start_Date")
         if not mkt.empty else None
     )
     cac_delta = (
@@ -84,8 +84,8 @@ def get_marketing_kpis(data: dict[str, pd.DataFrame]) -> list[KPICard]:
             title="Return on Ad Spend (ROAS)",
             value=f"{roas:.2f}x",
             raw_value=float(roas),
-            delta=round(roas_delta, 2) if roas_delta is not None else None,
-            delta_label=f"{PERIOD_LABEL} (pp)",
+            delta=round(roas_delta, 1) if roas_delta is not None else None,
+            delta_label=PERIOD_LABEL,
             color="teal" if roas >= 2.0 else "orange",
         ),
         KPICard(

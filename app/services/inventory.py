@@ -29,17 +29,35 @@ def get_inventory_kpis(data: dict[str, pd.DataFrame]) -> list[KPICard]:
 
     closing_stock = inv["Closing_Stock"].sum() if not inv.empty and "Closing_Stock" in inv.columns else 0
     avg_doc = inv["Days_of_Cover"].median() if not inv.empty and "Days_of_Cover" in inv.columns else 0.0
-    stockout_skus = (inv["Stockout_Days_In_Month"] > 0).sum() if not inv.empty and "Stockout_Days_In_Month" in inv.columns else 0
-    overstock_skus = (inv["Days_of_Cover"] > 90).sum() if not inv.empty and "Days_of_Cover" in inv.columns else 0
+    stockout_skus = (
+        inv.loc[inv["Stockout_Days_In_Month"] > 0, "Product_ID"].nunique()
+        if not inv.empty and {"Stockout_Days_In_Month", "Product_ID"}.issubset(inv.columns) else 0
+    )
+    overstock_skus = (
+        inv.loc[inv["Days_of_Cover"] > 90, "Product_ID"].nunique()
+        if not inv.empty and {"Days_of_Cover", "Product_ID"}.issubset(inv.columns) else 0
+    )
 
-    tot_sold = inv["Sold_Qty"].sum() if not inv.empty and "Sold_Qty" in inv.columns else 0
-    avg_inv = inv["Closing_Stock"].mean() if not inv.empty and "Closing_Stock" in inv.columns else 0
-    turnover = (tot_sold / avg_inv) if avg_inv > 0 else 0.0
+    # Annualized turnover = trailing-12-month units sold ÷ average monthly total
+    # stock. (36 months of sales ÷ per-row stock mean overstated it ~500x.)
+    turnover = 0.0
+    if not inv.empty and {"Snapshot_Month", "Sold_Qty", "Closing_Stock"}.issubset(inv.columns):
+        monthly = (
+            inv.assign(_Month=pd.to_datetime(inv["Snapshot_Month"], errors="coerce").dt.to_period("M"))
+            .groupby("_Month")
+            .agg(sold=("Sold_Qty", "sum"), stock=("Closing_Stock", "sum"))
+            .sort_index()
+            .tail(12)
+        )
+        avg_stock = float(monthly["stock"].mean())
+        if avg_stock > 0:
+            turnover = float(monthly["sold"].sum() / avg_stock)
 
     # REAL deltas: latest 12 snapshots vs the previous 12 snapshots
     stock_delta = pct_change_sum(inv, "Closing_Stock", "Snapshot_Month") if not inv.empty else None
     doc_delta = pct_change_mean(inv, "Days_of_Cover", "Snapshot_Month") if not inv.empty else None
     stockout_delta = (
+        # ponytail: stockout/overstock deltas stay row-count trends; values are unique products.
         pct_change_count(inv, "Snapshot_Month", mask=inv["Stockout_Days_In_Month"] > 0)
         if not inv.empty and "Stockout_Days_In_Month" in inv.columns else None
     )
@@ -90,7 +108,7 @@ def get_inventory_kpis(data: dict[str, pd.DataFrame]) -> list[KPICard]:
             value=f"{turnover:.1f}x",
             raw_value=float(turnover),
             delta=None,
-            delta_label="Total sales / average stock",
+            delta_label="Annualized, trailing 12 months",
             color="teal"
         ),
     ]

@@ -7,6 +7,7 @@ and close connections abruptly, which triggers this. The classic Selector
 event loop tolerates those disconnects.
 """
 import asyncio
+import os
 import sys
 
 import uvicorn
@@ -14,7 +15,10 @@ import uvicorn
 if sys.platform != "win32":
     raise SystemExit("This launcher is only meant for Windows QA runs.")
 
-config = uvicorn.Config("app.main:app", host="127.0.0.1", port=8000, log_level="info")
+# Override with QA_SERVER_PORT when 8000 is occupied by another process.
+PORT = int(os.environ.get("QA_SERVER_PORT", "8000"))
+
+config = uvicorn.Config("app.main:app", host="127.0.0.1", port=PORT, log_level="info")
 config.get_loop_factory = lambda use_subprocess=False: asyncio.SelectorEventLoop
 
 uvicorn.Server(config).run()

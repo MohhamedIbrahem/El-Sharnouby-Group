@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block subtitle %}
+<div class="page-subtitle">
+    What the system actually discovered in the loaded company data — with the numerical
+    evidence behind every finding, prioritized risks, and recommended actions.
+</div>
+{% endblock %}
+
+{% block content %}
+{% from "components/chart.html" import plotly_chart %}
+{% from "components/kpi_card.html" import kpi_card %}
+
+{# ── Report header + toolbar ────────────────────────────────────────────── #}
+<div class="report-toolbar no-print">
+    <div class="report-toolbar-note">
+        All findings are computed on demand from the datasets loaded at startup;
+        sources are named per finding. Nothing left this environment.
+    </div>
+    <div class="report-toolbar-actions">
+        <a class="btn btn-primary" href="/api/v1/report/export.md" download>Export Markdown</a>
+        <a class="btn btn-secondary" href="/api/v1/report/export.json" download>Export JSON</a>
+        <button class="btn btn-secondary" type="button" onclick="window.print()">Print / Save as PDF</button>
+    </div>
+</div>
+
+<header class="report-header">
+    <div class="report-eyebrow">El-Sharnouby Group · Business Intelligence Report</div>
+    <div class="report-meta">
+        <span><strong>Reporting period:</strong> {{ ctx.period_label or "not available" }}</span>
+        <span><strong>Generated:</strong> {{ ctx.generated_at }}</span>
+        <span>{{ ctx.findings | length }} findings · {{ ctx.risks | length }} risks · {{ ctx.opportunities | length }} opportunities · {{ ctx.recommendations | length }} actions</span>
+    </div>
+    <p class="report-note">
+        <strong>Reading guide:</strong> findings tagged <em>Simulated scenario</em> are counterfactual
+        models (e.g. discount caps), not realized savings. <em>Prediction</em> results are model outputs,
+        not actuals. Segmentation and anomaly flags are heuristic model outputs that require business
+        review before acting.
+    </p>
+</header>
+
+{# ── A. Executive Summary ───────────────────────────────────────────────── #}
+<section class="report-section" id="summary">
+    <h2 class="report-heading">A. Executive Summary</h2>
+    <div class="kpi-grid">
+        {% for k in ctx.executive_kpis %}
+        {{ kpi_card(title=k.title, value=k.value, delta=k.delta, delta_label=k.delta_label,
+                    favorable=k.favorable, neutral_delta=k.neutral_delta) }}
+        {% endfor %}
+    </div>
+    <div class="report-summary card">
+        <ul class="report-summary-list">
+            {% for b in ctx.exec_summary %}
+            <li>{{ b }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+
+{# ── B. Key Findings and Evidence ───────────────────────────────────────── #}
+<section class="report-section" id="findings">
+    <h2 class="report-heading">B. Key Findings and Evidence</h2>
+    {% if ctx.findings %}
+    <div class="report-finding-grid">
+        {% for f in ctx.findings %}
+        <article class="report-finding card" id="{{ f.id }}">
+            <div class="report-finding-badges">
+                <span class="badge badge-severity-{{ f.severity }}">{{ f.severity | upper }}</span>
+                <span class="badge badge-scope" title="{{ scope_tags[f.scope] }}">{{ scope_tags[f.scope] }}</span>
+                <span class="badge badge-neutral">{{ f.category }}</span>
+            </div>
+            <h3 class="report-finding-title"><span class="report-fid">{{ f.id }}</span> {{ f.title }}</h3>
+            <p class="report-finding-text">{{ f.finding }}</p>
+            <table class="report-evidence">
+                <thead><tr><th>Evidence</th><th>Value</th><th>Source</th></tr></thead>
+                <tbody>
+                    {% for e in f.evidence %}
+                    <tr><td>{{ e.label }}</td><td class="report-ev-value">{{ e.value }}</td><td class="report-ev-source">{{ e.source }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <dl class="report-finding-details">
+                <div><dt>Business interpretation</dt><dd>{{ f.interpretation }}</dd></div>
+                <div><dt>Potential impact</dt><dd>{{ f.impact }}</dd></div>
+                <div><dt>Recommended action</dt><dd>{{ f.action }}</dd></div>
+                {% if f.confidence %}<div><dt>Confidence / limitation</dt><dd>{{ f.confidence }}</dd></div>{% endif %}
+                <div><dt>Source</dt><dd class="report-source">{{ f.source }}</dd></div>
+            </dl>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="report-empty">No findings could be computed from the currently loaded data — see Data Coverage below.</div>
+    {% endif %}
+</section>
+
+{# ── C/D/E digests + reused charts ──────────────────────────────────────── #}
+{% set c_ids = ["F04", "F05", "F01", "F02", "F03"] %}
+{% set d_ids = ["F08", "F09", "F10", "F07", "F06", "F12", "F16"] %}
+{% set e_ids = ["F15", "F14", "F13"] %}
+{% macro digest(ids, section_id, heading, note) %}
+<section class="report-section" id="{{ section_id }}">
+    <h2 class="report-heading">{{ heading }}</h2>
+    {% if note %}<p class="report-section-note">{{ note }}</p>{% endif %}
+    <table class="report-table card">
+        <thead><tr><th>ID</th><th>Finding</th><th>Headline evidence</th><th>Scope</th></tr></thead>
+        <tbody>
+            {% for f in ctx.findings %}
+            {% if f.id in ids %}
+            <tr>
+                <td><a href="#{{ f.id }}">{{ f.id }}</a></td>
+                <td>{{ f.title }}</td>
+                <td class="report-ev-value">{{ f.evidence[0].value if f.evidence else "n/a" }}</td>
+                <td>{{ scope_tags[f.scope] }}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endmacro %}
+
+{{ digest(c_ids, "financial", "C. Financial and Sales Analysis",
+          "The KPI snapshot above carries the reused dashboard aggregates; the table lists the analytical findings behind them.") }}
+{{ digest(d_ids, "operations", "D. Operational Analysis", "") }}
+{{ digest(e_ids, "ai", "E. AI and Advanced Analytics Findings",
+          "Forecast numbers are predictions; segments are heuristic cluster assignments; anomaly flags are statistical candidates for review — none are treated as actual results.") }}
+
+<div class="chart-grid">
+    {% for c in ctx.charts %}
+    {{ plotly_chart(chart_json=c.chart_json, chart_id=c.chart_id, title=c.title,
+                    height=c.height, description=c.description) }}
+    {% endfor %}
+</div>
+
+{# ── F. Risks and Opportunities ─────────────────────────────────────────── #}
+<section class="report-section" id="risks">
+    <h2 class="report-heading">F. Business Risks and Opportunities</h2>
+    <p class="report-section-note">
+        <strong>Prioritization criteria (applied consistently):</strong> High — realized or directly-modeled
+        exposure ≥ ~1M EGP, or structural degradation of the margin engine; Medium — quantified exposure
+        below ~1M or trends whose quantified impact is indirect; Low — qualitative or model-only results.
+        Monetary gains are stated only where computable from the data with documented assumptions.
+    </p>
+    <h3 class="report-subheading">Risks</h3>
+    <table class="report-table card">
+        <thead><tr><th>Priority</th><th>Risk</th><th>Evidence</th><th>Area</th><th>Potential consequence</th><th>Next step</th><th>Based on</th></tr></thead>
+        <tbody>
+        {% for r in ctx.risks %}
+            <tr><td><span class="badge badge-priority-{{ r.priority | lower }}">{{ r.priority }}</span></td>
+                <td>{{ r.title }}</td><td>{{ r.evidence }}</td><td>{{ r.area }}</td>
+                <td>{{ r.consequence }}</td><td>{{ r.next_step }}</td>
+                <td>{% for id in r.linked_findings %}<a href="#{{ id }}">{{ id }}</a>{{ ", " if not loop.last }}{% endfor %}</td></tr>
+        {% else %}
+            <tr><td colspan="7" class="report-empty">No risks could be derived from the available findings.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% if ctx.opportunities %}
+    <h3 class="report-subheading">Opportunities</h3>
+    <table class="report-table card">
+        <thead><tr><th>Priority</th><th>Opportunity</th><th>Evidence</th><th>Area</th><th>Potential</th><th>Next step</th><th>Based on</th></tr></thead>
+        <tbody>
+        {% for o in ctx.opportunities %}
+            <tr><td><span class="badge badge-priority-{{ o.priority | lower }}">{{ o.priority }}</span></td>
+                <td>{{ o.title }}</td><td>{{ o.evidence }}</td><td>{{ o.area }}</td>
+                <td>{{ o.consequence }}</td><td>{{ o.next_step }}</td>
+                <td>{% for id in o.linked_findings %}<a href="#{{ id }}">{{ id }}</a>{{ ", " if not loop.last }}{% endfor %}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</section>
+
+{# ── G. Recommended Actions ─────────────────────────────────────────────── #}
+<section class="report-section" id="actions">
+    <h2 class="report-heading">G. Recommended Actions</h2>
+    <table class="report-table card">
+        <thead><tr><th>ID</th><th>Action</th><th>Based on</th><th>Category</th><th>Metric to monitor</th><th>How to evaluate</th></tr></thead>
+        <tbody>
+        {% for r in ctx.recommendations %}
+            <tr><td>{{ r.id }}</td>
+                <td><strong>{{ r.title }}</strong> — {{ r.action }}</td>
+                <td>{% for id in r.references %}<a href="#{{ id }}">{{ id }}</a>{{ ", " if not loop.last }}{% endfor %}</td>
+                <td><span class="badge {{ 'badge-positive' if r.category == 'Evidence-based' else 'badge-neutral' }}">{{ r.category }}</span></td>
+                <td>{{ r.metric_to_monitor }}</td><td>{{ r.evaluation }}</td></tr>
+        {% else %}
+            <tr><td colspan="6" class="report-empty">No recommendations could be linked to computed findings.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+{# ── H. Data Coverage and Limitations ───────────────────────────────────── #}
+<section class="report-section" id="coverage">
+    <h2 class="report-heading">H. Data Coverage and Limitations</h2>
+    <div class="report-coverage-grid">
+        <div>
+            <h3 class="report-subheading">Datasets loaded at generation time</h3>
+            <table class="report-table card">
+                <thead><tr><th>Dataset</th><th>Rows</th><th>Period covered</th></tr></thead>
+                <tbody>
+                {% for d in ctx.dataset_coverage %}
+                <tr><td>{{ d["table"] }}</td><td class="report-ev-value">{{ "{:,}".format(d["rows"]) }}</td><td>{{ d["coverage"] }}</td></tr>
+                {% else %}
+                <tr><td colspan="3" class="report-empty">No datasets were visible to this report.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <h3 class="report-subheading">Analysis status</h3>
+            <table class="report-table card">
+                <thead><tr><th>Analysis</th><th>Status</th><th>Detail</th></tr></thead>
+                <tbody>
+                {% for a in ctx.analyses_status %}
+                <tr><td>{{ a.name }}</td>
+                    <td><span class="badge {{ 'badge-positive' if a.status == 'executed' else ('badge-warn' if a.status == 'not possible' else 'badge-neutral') }}">{{ a.status }}</span></td>
+                    <td class="report-ev-source">{{ a.detail }}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <h3 class="report-subheading">Limitations and assumptions</h3>
+    <ol class="report-limits card">
+        {% for lim in ctx.limitations %}
+        <li>{{ lim["statement"] }} <em class="report-ev-source">({{ lim["source"] }})</em></li>
+        {% endfor %}
+    </ol>
+</section>
+
+<footer class="report-footer">
+    Generated {{ ctx.generated_at }} · El-Sharnouby Group BI Platform · figures recomputed on demand from
+    the loaded dataset · no data left this environment.
+</footer>
+{% endblock %}

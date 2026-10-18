@@ -170,9 +170,12 @@ def get_returns_by_channel(data: dict[str, pd.DataFrame]) -> ChartData:
     fig = go.Figure()
 
     if not sales.empty and "Channel" in sales.columns and "Is_Return" in sales.columns:
-        ret = sales.groupby("Channel", observed=False).agg(
+        # Returned units ÷ units sold — previously returned ROW counts over unit
+        # sums, which mixed units (wholesale collapsed to 0.06%).
+        units = sales.assign(Returned_Qty=sales["Quantity"].where(sales["Is_Return"] == True, 0.0))
+        ret = units.groupby("Channel", observed=False).agg(
             Total=("Quantity", "sum"),
-            Returns=("Is_Return", lambda x: (x == True).sum())
+            Returns=("Returned_Qty", "sum")
         ).reset_index()
         ret["Return_Rate"] = (ret["Returns"] / ret["Total"] * 100).fillna(0)
         ret["Channel_AR"] = ret["Channel"].map(lambda x: CHANNEL_AR.get(str(x), str(x)))
@@ -185,7 +188,7 @@ def get_returns_by_channel(data: dict[str, pd.DataFrame]) -> ChartData:
             textposition="outside",
             hovertemplate="<b>%{x}</b><br>Return rate: %{y:.1f}%<extra></extra>"
         ))
-        fig.update_layout(yaxis=dict(title="Return Rate (%)", range=[0, max(25, ret["Return_Rate"].max() * 1.3)]))
+        fig.update_layout(yaxis=dict(title="Return Rate (%)", range=[0, max(10, ret["Return_Rate"].max() * 1.3)]))
 
     return create_chart_data(
         fig,

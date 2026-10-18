@@ -56,6 +56,8 @@ from app.services.value_chain import (
     get_true_profitability_leaderboard, get_hidden_cost_breakdown,
     get_cross_dept_anomalies, get_profitability_gap, get_product_list
 )
+# BI Report (self-contained orchestration layer over the services above)
+from app.services.report import get_report_context, SCOPE_TAGS
 
 from app.services.printing import (
     get_printing_kpis, get_machine_yield, get_defect_types,
@@ -331,4 +333,20 @@ async def value_chain_page(request: Request, product_id: str | None = None):
         "charts": charts,
         "products": products,
         "selected_product_id": selected_product_id,
+    })
+
+
+# ── Phase 4: Business Intelligence Report ───
+@router.get("/report", response_class=HTMLResponse)
+@log_function
+async def report_page(request: Request):
+    """Data-driven BI report: findings, evidence, risks and recommendations."""
+    templates = request.app.state.templates
+    ctx = get_report_context(DATA)
+    return templates.TemplateResponse(request=request, name="pages/report.html", context={
+        "request": request,
+        "page_title": "Business Intelligence Report",
+        "page_id": "report",
+        "ctx": ctx,
+        "scope_tags": SCOPE_TAGS,
     })

@@ -2,6 +2,7 @@
 Customer 360 & Retention Service (Task 7)
 RFM analysis, K-Means clustering, cohorts, retention, and geographic demand.
 """
+import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from typing import Optional
@@ -21,19 +22,29 @@ PERIOD_LABEL = "vs prior 12 months"
 logger = setup_logger(__name__)
 
 # ── Computed-once cache (DATA is loaded once at startup and never mutates) ──
-_RFM_SEGMENTS_CACHE: Optional[pd.DataFrame] = None
+# Keyed per dataset (identity + shape) so a substituted dataset — e.g. a small
+# synthetic frame in tests — cannot be served for the real data in the same process.
+_RFM_SEGMENTS_CACHE: Optional[tuple[tuple, pd.DataFrame]] = None
 
 
 def _get_segmented_rfm(data: dict[str, pd.DataFrame]) -> pd.DataFrame:
-    """RFM + K-Means segmentation computed once and cached for the app lifetime."""
+    """RFM + K-Means segmentation computed once per dataset and cached."""
     global _RFM_SEGMENTS_CACHE
-    if _RFM_SEGMENTS_CACHE is None:
-        sales = data.get("Sales_Transactions", pd.DataFrame())
-        rfm = compute_rfm_scores(sales)
-        if not rfm.empty:
-            rfm = segment_customers_kmeans(rfm)
-        _RFM_SEGMENTS_CACHE = rfm
-    return _RFM_SEGMENTS_CACHE
+    sales = data.get("Sales_Transactions", pd.DataFrame())
+    key = (id(data), len(data), sales.shape)
+    if (
+        _RFM_SEGMENTS_CACHE is not None
+        and _RFM_SEGMENTS_CACHE[0] == key
+        and not _RFM_SEGMENTS_CACHE[1].empty
+    ):
+        return _RFM_SEGMENTS_CACHE[1]
+
+    rfm = compute_rfm_scores(sales)
+    if not rfm.empty:
+        rfm = segment_customers_kmeans(rfm)
+    if not rfm.empty:  # empty results stay uncached (cheap to recompute, never poison)
+        _RFM_SEGMENTS_CACHE = (key, rfm)
+    return rfm
 
 
 @log_function
@@ -235,13 +246,20 @@ def get_aov_distribution(data: dict[str, pd.DataFrame]) -> ChartData:
     fig = go.Figure()
 
     if not sales.empty and "Invoice_ID" in sales.columns and "Net_Sales_EGP" in sales.columns:
-        order_totals = sales.groupby("Invoice_ID")["Net_Sales_EGP"].sum().clip(upper=15000)
+        order_totals = sales.groupby("Invoice_ID")["Net_Sales_EGP"].sum().clip(upper=15000).dropna()
 
-        fig.add_trace(go.Histogram(
-            x=order_totals,
-            nbinsx=30,
+        # Pre-bin server-side: sending all ~180k raw values made this chart ~1.9 MB.
+        counts, edges = np.histogram(order_totals, bins=30, range=(0.0, 15000.0))
+        centers = (edges[:-1] + edges[1:]) / 2
+        labels = [f"{lo:,.0f} – {hi:,.0f} EGP" for lo, hi in zip(edges[:-1], edges[1:])]
+
+        fig.add_trace(go.Bar(
+            x=centers,
+            y=counts,
+            width=float(edges[1] - edges[0]),
             marker_color=SECONDARY_TEAL,
-            hovertemplate="Basket value: %{x:,.0f} EGP<br>Order count: %{y}<extra></extra>"
+            customdata=labels,
+            hovertemplate="Basket value: %{customdata}<br>Order count: %{y:,.0f}<extra></extra>"
         ))
         fig.update_layout(
             xaxis=dict(title="Order Value (EGP)"),
